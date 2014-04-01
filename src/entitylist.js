@@ -73,12 +73,13 @@ var EntityList = module.exports = Class.extend({
      * Remove an entity from this list.
      * @public
      * @param {Entity} entity
+     * @return bool entity removed
      */
     remove: function (entity) {
         var node = this._entities[entity.id];
 
         if (node === undefined) {
-            return;
+            return false;
         }
 
         if (node.prev === null) {
@@ -94,6 +95,7 @@ var EntityList = module.exports = Class.extend({
 
         this.length -= 1;
         delete this._entities[entity.id];
+        return true;
     },
 
     /**

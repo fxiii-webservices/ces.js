@@ -66,8 +66,8 @@ var Family = module.exports = Class.extend({
      * @param {Entity} entity
      */
     removeEntity: function (entity) {
-        this._entities.remove(entity);
-        this.onEntityRemoved.emit(entity,this._componentNames);
+        var success = this._entities.remove(entity);
+        if (success) this.onEntityRemoved.emit(entity,this._componentNames);
     },
 
     /**

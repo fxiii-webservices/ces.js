@@ -867,7 +867,8 @@ var World = module.exports = Class.extend({
 });
 
 require.define("/src/family.js",function(require,module,exports,__dirname,__filename,process,global){var Class = require('./class'),
-    EntityList = require('./entitylist');
+    EntityList = require('./entitylist'),
+    Signal = require('./signal');
 
 /**
  * The family is a collection of entities having all the specified components.
@@ -889,6 +890,20 @@ var Family = module.exports = Class.extend({
          * @private
          */
         this._entities = new EntityList();
+        
+        /**
+         * Signaling a new entity joining the collection
+         * @public
+         * @readonly
+         */
+        this.onEntityAdded = new Signal();
+        
+        /**
+         * Signaling an entity leaving the collection
+         * @public
+         * @readonly
+         */
+        this.onEntityRemoved = new Signal();
     },
 
     /**
@@ -908,6 +923,7 @@ var Family = module.exports = Class.extend({
     addEntityIfMatch: function (entity) {
         if (!this._entities.has(entity) && this._matchEntity(entity)) {
             this._entities.add(entity);
+            this.onEntityAdded.emit(entity,this._componentNames);
         }
     },
 
@@ -918,7 +934,8 @@ var Family = module.exports = Class.extend({
      * @param {Entity} entity
      */
     removeEntity: function (entity) {
-        this._entities.remove(entity);
+        var success = this._entities.remove(entity);
+        if (success) this.onEntityRemoved.emit(entity,this._componentNames);
     },
 
     /**
@@ -1052,12 +1069,13 @@ var EntityList = module.exports = Class.extend({
      * Remove an entity from this list.
      * @public
      * @param {Entity} entity
+     * @return bool entity removed
      */
     remove: function (entity) {
         var node = this._entities[entity.id];
 
         if (node === undefined) {
-            return;
+            return false;
         }
 
         if (node.prev === null) {
@@ -1073,6 +1091,7 @@ var EntityList = module.exports = Class.extend({
 
         this.length -= 1;
         delete this._entities[entity.id];
+        return true;
     },
 
     /**
