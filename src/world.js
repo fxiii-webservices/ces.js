@@ -34,8 +34,44 @@ var World = module.exports = Class.extend({
      * @param {System} system
      */
     addSystem: function (system) {
+        var entities,familyId,families;
         system.world = this;
         this._systems.push(system);
+        
+        if( this._systemHasValidComponentDeclaration(system)){
+            entities = this.getEntities.apply(this,system.components);
+        }
+        
+        // setupEntity notification handling
+        if( this._systemHasValidComponentDeclaration(system) && 
+            system.setupEntity !== undefined){
+                
+            // notify the new systems about exising and interesting Entities
+            entities.map( function(e){ system.setupEntity(e); } );
+            
+            // notify the systems about freshly added interesting Entities
+            families = this._families;
+            familyId = '$' + system.components.join(',');
+            // TRICK: families[familyId] exists for sure as side effect of this.getEntities done before.
+            families[familyId].onEntityAdded.add(function(newEntity,familyName){
+                system.setupEntity(newEntity);
+            }); 
+        }
+        
+        
+        // tearDownEntity notification handling
+        if( this._systemHasValidComponentDeclaration(system) && 
+            system.teardownEntity !== undefined){
+            
+            // notify the systems about Entities ceasing to be interesting
+            families = this._families;
+            familyId = '$' + system.components.join(',');
+            // TRICK: families[familyId] exists for sure as side effect of this.getEntities done before.
+            families[familyId].onEntityRemoved.add(function(entity,familyName){
+                system.teardownEntity(entity);
+            });    
+        }
+        
         return this;
     },
 
@@ -130,11 +166,18 @@ var World = module.exports = Class.extend({
      * @param {Number} dt time interval between updates.
      */
     update: function (dt) {
-        var systems, i, len;
-
+        var systems, i, len,system;
+        
         systems = this._systems;
+        
         for (i = 0, len = systems.length; i < len; ++i) {
-            systems[i].update(dt);
+            system = systems[i];
+            
+            if (this._systemHasValidComponentDeclaration(system)){
+                system.entities = this.getEntities.apply(this,system.components);
+            }
+            
+            system.update(dt);
         }
     },
 
@@ -166,5 +209,15 @@ var World = module.exports = Class.extend({
         for (familyId in families) {
             families[familyId].onComponentRemoved(entity, componentName);
         }
+    },
+    
+    /**
+     * check if system declares its components needs 
+     * @private
+     * @param {System} system to be checked
+     * @return {bool} if system has a valid components property
+     */
+    _systemHasValidComponentDeclaration: function(system){
+        return (!!(system.components) && system.components.length >0) ;
     }
 });

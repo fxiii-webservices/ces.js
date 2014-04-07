@@ -15,6 +15,14 @@ var System = module.exports = Class.extend({
          */
         this.world = null;
     },
+    
+    /**
+     * Components needs.
+     * Declare an array of components to receive the "this.entity" bonus!! 
+     * Declare components + setupEvent method to get notified about interesting Entities
+     * Declare components + tearDown method to get notified about Entities that cease to be interesting
+     * @public
+     components: [], 
 
     /**
      * Update the entities.

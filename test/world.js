@@ -85,4 +85,136 @@ describe('world', function () {
         world.getEntities('a', 'b', 'c').length.should.equal(99);
         world.getEntities('a', 'b').length.should.equal(100);
     });
+    
+    it('should set this.entities when updating a system with valid components',function(){
+        var world = new CES.World(),
+            a,b,c,verboseSystem,
+            VerboseSystem = CES.System.extend({
+                components: ['a', 'b'],
+                update: function (dt) {
+                    var entities = this.entities;
+                    entities.should.include(a);
+                    entities.should.include(b);
+                    entities.should.not.include(c);
+                }
+            });
+        a = createEntityA(); // a, b, c
+        b = createEntityB(); // a, b,
+        c = createEntityC(); // a, c
+        verboseSystem = new VerboseSystem();
+        world.addEntity(a);
+        world.addEntity(b);
+        world.addEntity(c);
+        world.addSystem(verboseSystem);
+        world.update(1);
+        
+    });
+    
+    it('should notify the new systems about exising and interesting Entities' ,function(){
+        var world = new CES.World(),
+            a,b,c,verboseSystem,
+            entitiesSaw = [],
+            VerboseSystem = CES.System.extend({
+                components: ['a', 'b'],
+                setupEntity: function(entity){
+                    entitiesSaw.push(entity);
+                }
+            });
+            
+        a = createEntityA(); // a, b, c
+        b = createEntityB(); // a, b,
+        c = createEntityC(); // a, c
+        verboseSystem = new VerboseSystem();
+        world.addEntity(a);
+        world.addEntity(b);
+        world.addEntity(c);
+        world.addSystem(verboseSystem);
+        
+        entitiesSaw.should.include(a);
+        entitiesSaw.should.include(b);
+        entitiesSaw.should.not.include(c);
+    });
+    
+    it('should notify the systems about freshly added interesting Entities' ,function(){
+        var world = new CES.World(),
+            a,b,c,verboseSystem,
+            entitiesSaw = [],
+            VerboseSystem = CES.System.extend({
+                components: ['a', 'b'],
+                setupEntity: function(entity){
+                    entitiesSaw.push(entity);
+                }
+            });
+            
+        a = createEntityA(); // a, b, c
+        b = createEntityB(); // a, b,
+        c = createEntityC(); // a, c
+        verboseSystem = new VerboseSystem();
+        world.addSystem(verboseSystem);
+        
+        world.addEntity(a);
+        world.addEntity(b);
+        world.addEntity(c);
+        
+        entitiesSaw.should.include(a);
+        entitiesSaw.should.include(b);
+        entitiesSaw.should.not.include(c);
+    });
+    
+    it('should notify the systems about Entities becoming interisting' ,function(){
+        var world = new CES.World(),
+            a,b,c,verboseSystem,
+            entitiesSaw = [],
+            VerboseSystem = CES.System.extend({
+                components: ['a', 'b'],
+                setupEntity: function(entity){
+                    entitiesSaw.push(entity);
+                }
+            });
+            
+        a = createEntityA(); // a, b, c
+        b = createEntityB(); // a, b,
+        c = createEntityC(); // a, c
+        verboseSystem = new VerboseSystem();
+        world.addSystem(verboseSystem);
+        
+        world.addEntity(a);
+        world.addEntity(b);
+        world.addEntity(c);
+        // c is interesting now!
+        c.addComponent(new CompB());
+        
+        entitiesSaw.should.include(a);
+        entitiesSaw.should.include(b);
+        entitiesSaw.should.include(c);
+    });
+    
+    it('should notify the systems about Entities ceasing to be interesting' ,function(){
+        var world = new CES.World(),
+            a,b,c,verboseSystem,
+            entitiesSaw = [],
+            VerboseSystem = CES.System.extend({
+                components: ['a', 'b'],
+                teardownEntity: function(entity){
+                    entitiesSaw.push(entity);
+                }
+            });
+            
+        a = createEntityA(); // a, b, c
+        b = createEntityB(); // a, b,
+        c = createEntityC(); // a, c
+        verboseSystem = new VerboseSystem();
+        world.addSystem(verboseSystem);
+        
+        world.addEntity(a);
+        world.addEntity(b);
+        world.addEntity(c);
+        
+        // a is not interesting anymore!
+        a.removeComponent("b");
+        
+        entitiesSaw.should.include(a);
+        entitiesSaw.should.not.include(b);
+        entitiesSaw.should.not.include(c);
+    });
 });
