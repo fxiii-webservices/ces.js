@@ -212,9 +212,11 @@ describe('world', function () {
         
         // a is not interesting anymore!
         a.removeComponent("b");
+        // b is not in this world enymore..
+        world.removeEntity(b);
         
         entitiesSaw.should.include(a);
-        entitiesSaw.should.not.include(b);
+        entitiesSaw.should.include(b);
         entitiesSaw.should.not.include(c);
     });
 });
